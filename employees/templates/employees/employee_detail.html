@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Employee Profile{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card p-4 text-center mb-4">
+            {% if employee.profile_picture %}
+                <img src="{{ employee.profile_picture.url }}" class="rounded-circle mx-auto mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+            {% else %}
+                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 150px; height: 150px;">
+                    <i class="bi bi-person text-white fs-1"></i>
+                </div>
+            {% endif %}
+            <h4>{{ employee.first_name }} {{ employee.last_name }}</h4>
+            <p class="text-muted">{{ employee.designation }} | {{ employee.department.name }}</p>
+            <hr>
+            <div class="text-start">
+                <p><strong>ID:</strong> {{ employee.employee_id }}</p>
+                <p><strong>Email:</strong> {{ employee.email }}</p>
+                <p><strong>Phone:</strong> {{ employee.phone }}</p>
+                <p><strong>Status:</strong> <span class="badge bg-success">{{ employee.employment_status }}</span></p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card p-4">
+            <ul class="nav nav-tabs mb-4" id="profileTabs">
+                <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#details">Details</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#leave">Leave History</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#payroll">Payroll</a></li>
+            </ul>
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="details">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="text-muted small">Date of Birth</label><p>{{ employee.date_of_birth }}</p></div>
+                        <div class="col-md-6"><label class="text-muted small">Date Joined</label><p>{{ employee.date_joined }}</p></div>
+                        <div class="col-md-6"><label class="text-muted small">Employment Type</label><p>{{ employee.employment_type }}</p></div>
+                        <div class="col-md-6"><label class="text-muted small">Salary</label><p>${{ employee.salary }}</p></div>
+                        <div class="col-md-12"><label class="text-muted small">Address</label><p>{{ employee.address }}</p></div>
+                        <div class="col-md-6"><label class="text-muted small">Emergency Contact</label><p>{{ employee.emergency_contact_name }}</p></div>
+                        <div class="col-md-6"><label class="text-muted small">Emergency Phone</label><p>{{ employee.emergency_contact_phone }}</p></div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="leave">
+                    <table class="table table-sm">
+                        <thead><tr><th>Type</th><th>Date</th><th>Status</th></tr></thead>
+                        <tbody>
+                            {% for leave in employee.leave_requests.all %}
+                            <tr><td>{{ leave.leave_type }}</td><td>{{ leave.start_date }}</td><td>{{ leave.status }}</td></tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center">No leave records.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="tab-pane fade" id="payroll">
+                    <table class="table table-sm">
+                        <thead><tr><th>Month/Year</th><th>Net Salary</th><th>Status</th></tr></thead>
+                        <tbody>
+                            {% for pay in employee.payrolls.all %}
+                            <tr><td>{{ pay.month }}/{{ pay.year }}</td><td>${{ pay.net_salary }}</td><td>{{ pay.payment_status }}</td></tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center">No payroll records.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

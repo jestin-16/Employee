@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Leave Requests{% endblock %}
+
+{% block content %}
+<div class="card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4>Manage Leave Requests</h4>
+        <a href="{% url 'leave_apply' %}" class="btn btn-primary">Apply for Leave</a>
+    </div>
+
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Employee</th>
+                <th>Type</th>
+                <th>Duration</th>
+                <th>Status</th>
+                {% if request.user.role in 'ADMIN,HR' %}<th>Actions</th>{% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for leave in object_list %}
+            <tr>
+                <td>{{ leave.employee.first_name }} {{ leave.employee.last_name }}</td>
+                <td>{{ leave.leave_type }}</td>
+                <td>{{ leave.start_date }} to {{ leave.end_date }}</td>
+                <td>
+                    <span class="badge {% if leave.status == 'Approved' %}bg-success{% elif leave.status == 'Rejected' %}bg-danger{% else %}bg-warning{% endif %}">
+                        {{ leave.status }}
+                    </span>
+                </td>
+                {% if request.user.role in 'ADMIN,HR' %}
+                <td>
+                    {% if leave.status == 'Pending' %}
+                    <a href="{% url 'leave_approve' leave.pk %}?status=Approved" class="btn btn-sm btn-success">Approve</a>
+                    <a href="{% url 'leave_approve' leave.pk %}?status=Rejected" class="btn btn-sm btn-danger">Reject</a>
+                    {% endif %}
+                </td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

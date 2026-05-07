@@ -1,0 +1,10 @@
+django>=5.0,<5.1
+djangorestframework
+mysqlclient
+gunicorn
+whitenoise
+pillow
+django-crispy-forms
+crispy-bootstrap5
+python-decouple
+django-filter
