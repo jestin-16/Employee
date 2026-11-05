@@ -1,0 +1,100 @@
+services:
+  # ============================================================================
+  # SERVICE 1: MySQL Virtualized Database Container
+  # ============================================================================
+  db:
+    image: mysql:8.0
+    container_name: ems-mysql-db
+    restart: unless-stopped
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-employee_db}
+      MYSQL_USER: ${DB_USER:-ems_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-ems_password}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - virtualization_net
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ============================================================================
+  # SERVICE 2: Django Web Application Container (Gunicorn WSGI)
+  # ============================================================================
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ems-web-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-django-insecure-virtualization-microproject-secret-key-2026}
+      DEBUG: ${DEBUG:-True}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-*}
+      CSRF_TRUSTED_ORIGINS: http://localhost:8088,http://127.0.0.1:8088,http://localhost:80,http://127.0.0.1:80,http://localhost:8000
+      DB_ENGINE: mysql
+      DB_NAME: ${DB_NAME:-employee_db}
+      DB_USER: ${DB_USER:-ems_user}
+      DB_PASSWORD: ${DB_PASSWORD:-ems_password}
+      DB_HOST: db
+      DB_PORT: 3306
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    expose:
+      - "8000"
+    ports:
+      - "8000:8000"
+    networks:
+      - virtualization_net
+
+  # ============================================================================
+  # SERVICE 3: Nginx Reverse Proxy & Static File Offloader
+  # ============================================================================
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: ems-nginx-proxy
+    restart: unless-stopped
+    depends_on:
+      - web
+    ports:
+      - "${NGINX_PORT:-8088}:80"
+    volumes:
+      - static_volume:/app/staticfiles:ro
+      - media_volume:/app/media:ro
+    networks:
+      - virtualization_net
+
+# ==============================================================================
+# Persistent Storage Volumes (Storage Virtualization)
+# ==============================================================================
+volumes:
+  mysql_data:
+    name: ems_mysql_data
+  static_volume:
+    name: ems_static_volume
+  media_volume:
+    name: ems_media_volume
+
+# ==============================================================================
+# Isolated Bridge Network (Network Virtualization & Container DNS Discovery)
+# ==============================================================================
+networks:
+  virtualization_net:
+    name: ems_virtualization_net
+    driver: bridge
+

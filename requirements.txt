@@ -1,6 +1,8 @@
-django>=5.0,<5.1
+Django>=5.0,<5.3
 djangorestframework
 mysqlclient
+pymysql
+cryptography
 gunicorn
 whitenoise
 pillow
@@ -8,3 +10,5 @@ django-crispy-forms
 crispy-bootstrap5
 python-decouple
 django-filter
+docker
+requests

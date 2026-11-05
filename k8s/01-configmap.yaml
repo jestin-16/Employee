@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ems-config
+  namespace: microproject-virtualization
+data:
+  DEBUG: "True"
+  ALLOWED_HOSTS: "*"
+  DB_ENGINE: "mysql"
+  DB_NAME: "employee_db"
+  DB_USER: "ems_user"
+  DB_HOST: "mysql-service"
+  DB_PORT: "3306"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: microproject-virtualization
+data:
+  nginx.conf: |
+    events { worker_connections 1024; }
+    http {
+        include /etc/nginx/mime.types;
+        upstream web_backend {
+            server web-service:8000;
+        }
+        server {
+            listen 80;
+            server_name _;
+            location /healthz {
+                return 200 'OK';
+            }
+            location / {
+                proxy_pass http://web_backend;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+        }
+    }
+

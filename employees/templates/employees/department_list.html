@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Departments{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center my-4 gap-3">
+    <div>
+        <h4 class="fw-bold mb-1" style="letter-spacing: -0.02em;">Departments</h4>
+        <p class="text-muted small mb-0">Overview of organizational divisions and teams.</p>
+    </div>
+    {% if request.user.role in 'ADMIN HR' or request.user.is_superuser %}
+    <a href="{% url 'department_add' %}" class="btn btn-primary d-inline-flex align-items-center gap-1.5 shadow-xs">
+        <i class="bi bi-plus-lg"></i> Add Department
+    </a>
+    {% endif %}
+</div>
+
+<div class="row g-4">
+    {% for dept in departments %}
+    <div class="col-md-6 col-xl-4">
+        <div class="card h-100 p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="d-flex align-items-center gap-2.5">
+                    <div class="stat-icon-wrapper" style="background: #f1f5f9; color: #475569; width: 40px; height: 40px; font-size: 1.1rem;">
+                        <i class="bi bi-building"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-0 text-dark">{{ dept.name }}</h6>
+                        <small class="text-muted" style="font-size: 0.75rem;">Created {{ dept.created_at|date:"M Y" }}</small>
+                    </div>
+                </div>
+                <span class="badge badge-subtle-primary">
+                    {{ dept.employees.count }} members
+                </span>
+            </div>
+            
+            <p class="text-muted small flex-grow-1 mb-4" style="line-height: 1.5;">
+                {{ dept.description|default:"No department description provided." }}
+            </p>
+
+            <div class="pt-3 border-top border-light d-flex justify-content-between align-items-center">
+                <a href="{% url 'employee_list' %}?department={{ dept.id }}" class="btn btn-sm btn-light border small px-3">
+                    View staff <i class="bi bi-arrow-right ms-1 text-muted"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5 text-muted small">
+        <i class="bi bi-buildings d-block fs-3 mb-2 opacity-50"></i>
+        No departments created yet.
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

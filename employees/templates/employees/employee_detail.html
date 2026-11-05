@@ -1,71 +1,169 @@
 {% extends 'base.html' %}
 
-{% block page_title %}Employee Profile{% endblock %}
+{% block page_title %}{{ employee.first_name }} {{ employee.last_name }}{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-4">
-        <div class="card p-4 text-center mb-4">
+<div class="d-flex justify-content-between align-items-center my-4">
+    <a href="{% url 'employee_list' %}" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1">
+        <i class="bi bi-arrow-left"></i> Back to directory
+    </a>
+    {% if request.user.role in 'ADMIN HR' or request.user.is_superuser %}
+    <div class="d-flex gap-2">
+        <a href="{% url 'employee_edit' employee.pk %}" class="btn btn-sm btn-primary">
+            <i class="bi bi-pencil me-1"></i> Edit Profile
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="row g-4">
+    <!-- Profile Summary Sidebar -->
+    <div class="col-lg-4">
+        <div class="card p-4 text-center">
             {% if employee.profile_picture %}
-                <img src="{{ employee.profile_picture.url }}" class="rounded-circle mx-auto mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                <img src="{{ employee.profile_picture.url }}" class="rounded-circle mx-auto mb-3 shadow-xs" style="width: 100px; height: 100px; object-fit: cover;">
             {% else %}
-                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 150px; height: 150px;">
-                    <i class="bi bi-person text-white fs-1"></i>
+                <div class="avatar-initial mx-auto mb-3" style="width: 80px; height: 80px; font-size: 1.75rem; background: #e0f2fe; color: #0284c7;">
+                    {{ employee.first_name|slice:":1"|upper }}{{ employee.last_name|slice:":1"|upper }}
                 </div>
             {% endif %}
-            <h4>{{ employee.first_name }} {{ employee.last_name }}</h4>
-            <p class="text-muted">{{ employee.designation }} | {{ employee.department.name }}</p>
-            <hr>
+
+            <h5 class="fw-bold mb-1">{{ employee.first_name }} {{ employee.last_name }}</h5>
+            <p class="text-muted small mb-2">{{ employee.designation }}</p>
+            <div>
+                {% if employee.employment_status == 'Active' %}
+                    <span class="badge badge-subtle-success">Active</span>
+                {% elif employee.employment_status == 'On Leave' %}
+                    <span class="badge badge-subtle-warning">On Leave</span>
+                {% else %}
+                    <span class="badge badge-subtle-danger">{{ employee.employment_status }}</span>
+                {% endif %}
+            </div>
+
+            <hr class="my-4 border-light">
+
             <div class="text-start">
-                <p><strong>ID:</strong> {{ employee.employee_id }}</p>
-                <p><strong>Email:</strong> {{ employee.email }}</p>
-                <p><strong>Phone:</strong> {{ employee.phone }}</p>
-                <p><strong>Status:</strong> <span class="badge bg-success">{{ employee.employment_status }}</span></p>
+                <div class="mb-2.5">
+                    <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.7rem;">Employee ID</small>
+                    <div class="small fw-semibold text-dark"><code>{{ employee.employee_id }}</code></div>
+                </div>
+                <div class="mb-2.5">
+                    <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.7rem;">Department</small>
+                    <div class="small fw-semibold text-dark">{{ employee.department.name|default:"Unassigned" }}</div>
+                </div>
+                <div class="mb-2.5">
+                    <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.7rem;">Email</small>
+                    <div class="small fw-semibold text-dark">{{ employee.email }}</div>
+                </div>
+                <div>
+                    <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.7rem;">Phone</small>
+                    <div class="small fw-semibold text-dark">{{ employee.phone }}</div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-8">
+
+    <!-- Detailed Tabs -->
+    <div class="col-lg-8">
         <div class="card p-4">
-            <ul class="nav nav-tabs mb-4" id="profileTabs">
-                <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#details">Details</a></li>
-                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#leave">Leave History</a></li>
-                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#payroll">Payroll</a></li>
+            <ul class="nav nav-pills mb-4 gap-2" id="profileTabs">
+                <li class="nav-item">
+                    <button class="nav-link active small py-1.5 px-3 rounded-pill" data-bs-toggle="tab" data-bs-target="#details">Information</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link small py-1.5 px-3 rounded-pill" data-bs-toggle="tab" data-bs-target="#leave">Leave History</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link small py-1.5 px-3 rounded-pill" data-bs-toggle="tab" data-bs-target="#payroll">Payroll</button>
+                </li>
             </ul>
+
             <div class="tab-content">
                 <div class="tab-pane fade show active" id="details">
                     <div class="row g-3">
-                        <div class="col-md-6"><label class="text-muted small">Date of Birth</label><p>{{ employee.date_of_birth }}</p></div>
-                        <div class="col-md-6"><label class="text-muted small">Date Joined</label><p>{{ employee.date_joined }}</p></div>
-                        <div class="col-md-6"><label class="text-muted small">Employment Type</label><p>{{ employee.employment_type }}</p></div>
-                        <div class="col-md-6"><label class="text-muted small">Salary</label><p>${{ employee.salary }}</p></div>
-                        <div class="col-md-12"><label class="text-muted small">Address</label><p>{{ employee.address }}</p></div>
-                        <div class="col-md-6"><label class="text-muted small">Emergency Contact</label><p>{{ employee.emergency_contact_name }}</p></div>
-                        <div class="col-md-6"><label class="text-muted small">Emergency Phone</label><p>{{ employee.emergency_contact_phone }}</p></div>
+                        <div class="col-sm-6">
+                            <small class="text-muted small">Date of Birth</small>
+                            <p class="fw-semibold text-dark small mb-0">{{ employee.date_of_birth }}</p>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted small">Date Joined</small>
+                            <p class="fw-semibold text-dark small mb-0">{{ employee.date_joined }}</p>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted small">Employment Type</small>
+                            <p class="fw-semibold text-dark small mb-0">{{ employee.employment_type }}</p>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted small">Base Salary</small>
+                            <p class="fw-semibold text-dark small mb-0">${{ employee.salary }}</p>
+                        </div>
+                        <div class="col-12">
+                            <small class="text-muted small">Residential Address</small>
+                            <p class="fw-semibold text-dark small mb-0">{{ employee.address }}</p>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted small">Emergency Contact</small>
+                            <p class="fw-semibold text-dark small mb-0">{{ employee.emergency_contact_name }}</p>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted small">Emergency Phone</small>
+                            <p class="fw-semibold text-dark small mb-0">{{ employee.emergency_contact_phone }}</p>
+                        </div>
                     </div>
                 </div>
+
                 <div class="tab-pane fade" id="leave">
-                    <table class="table table-sm">
-                        <thead><tr><th>Type</th><th>Date</th><th>Status</th></tr></thead>
-                        <tbody>
-                            {% for leave in employee.leave_requests.all %}
-                            <tr><td>{{ leave.leave_type }}</td><td>{{ leave.start_date }}</td><td>{{ leave.status }}</td></tr>
-                            {% empty %}
-                            <tr><td colspan="3" class="text-center">No leave records.</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle">
+                            <thead>
+                                <tr><th>Type</th><th>Duration</th><th>Status</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for leave in employee.leave_requests.all %}
+                                <tr>
+                                    <td>{{ leave.leave_type }}</td>
+                                    <td>{{ leave.start_date }} to {{ leave.end_date }}</td>
+                                    <td>
+                                        {% if leave.status == 'Approved' %}
+                                            <span class="badge badge-subtle-success">Approved</span>
+                                        {% elif leave.status == 'Pending' %}
+                                            <span class="badge badge-subtle-warning">Pending</span>
+                                        {% else %}
+                                            <span class="badge badge-subtle-danger">Rejected</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="3" class="text-center py-4 text-muted small">No leave records recorded.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
+
                 <div class="tab-pane fade" id="payroll">
-                    <table class="table table-sm">
-                        <thead><tr><th>Month/Year</th><th>Net Salary</th><th>Status</th></tr></thead>
-                        <tbody>
-                            {% for pay in employee.payrolls.all %}
-                            <tr><td>{{ pay.month }}/{{ pay.year }}</td><td>${{ pay.net_salary }}</td><td>{{ pay.payment_status }}</td></tr>
-                            {% empty %}
-                            <tr><td colspan="3" class="text-center">No payroll records.</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle">
+                            <thead>
+                                <tr><th>Period</th><th>Net Disbursed</th><th>Status</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for p in employee.payrolls.all %}
+                                <tr>
+                                    <td>{{ p.month }}/{{ p.year }}</td>
+                                    <td class="fw-bold">${{ p.net_salary }}</td>
+                                    <td>
+                                        <span class="badge {% if p.payment_status == 'Paid' %}badge-subtle-success{% else %}badge-subtle-warning{% endif %}">
+                                            {{ p.payment_status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="3" class="text-center py-4 text-muted small">No payroll records generated.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
